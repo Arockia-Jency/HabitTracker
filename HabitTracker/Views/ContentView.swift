@@ -40,7 +40,7 @@ struct ContentView: View {
                             Button("Unlock Now") {
                                 // If you added the authenticate() function, use it here!
                                 withAnimation(.spring()) {
-                                    viewModel.toggleLock()
+                                    viewModel.authenticate()
                                 }
                             }
                             .buttonStyle(.borderedProminent)
