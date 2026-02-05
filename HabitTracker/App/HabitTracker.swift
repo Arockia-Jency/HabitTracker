@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
-struct The_VaultApp: App {
+struct HabitTracker: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Note.self)
     }
 }
