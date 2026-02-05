@@ -9,96 +9,72 @@ import SwiftUI
 import SwiftData
 
 
+import SwiftUI
+import SwiftData
+
 struct ContentView: View {
-    
     @State private var viewModel = VaultViewModel()
-    @State private var isShowingAddNote: Bool = false
-    @Query private var notes: [Note]
-    @Environment(\.modelContext) var modelContext
-    
+    @State private var isShowingAddNote = false
+    @State private var searchText = ""
+
     var body: some View {
-        NavigationStack{
-            
-            VStack(spacing:30){
-                
-                if viewModel.isLocked {
-                    
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 100))
-                        .foregroundColor(.red)
+        NavigationStack {
+            ZStack {
+                // 1. The Full Screen Background Layer
+                LinearGradient(colors: [.blue.opacity(0.15), .purple.opacity(0.15)],
+                               startPoint: .topLeading,
+                               endPoint: .bottomTrailing)
+                    .ignoresSafeArea() //
+
+                // 2. The Content Layer
+                VStack {
+                    if viewModel.isLocked {
+                        VStack(spacing: 30) {
+                            Image(systemName: "lock.shield.fill")
+                                .font(.system(size: 100))
+                                .foregroundStyle(.red.gradient) //
+                            
+                            Text("Your Vault is Locked")
+                                .font(.headline)
+                            
+                            Button("Unlock Now") {
+                                // If you added the authenticate() function, use it here!
+                                withAnimation(.spring()) {
+                                    viewModel.toggleLock()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        }
                         .transition(.scale)
-                    
-                    Text("Your Vault is Locked")
-                    
-                    Button("Unlock Now"){
-                        withAnimation(.spring(duration: 0.5)) {
-                            viewModel.toggleLock()
-                        }
+                    } else {
+                        VaultListView(searchString: searchText)
                     }
-                    .buttonStyle(.borderedProminent)
-                        
-                } else {
-                    List {
-                        ForEach(notes) { note in
-                            VStack (alignment: .leading){
-                                Text(note.content)
-                                    .font(.headline)
-                                Text(note.dateCreated.formatted(date: .abbreviated, time: .shortened))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let noteToDelete = notes[index]
-                                modelContext.delete(noteToDelete)
-                            }
-                            // Optional but can help ensure immediate persistence
-                            try? modelContext.save()
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                    // 2. This is the magic line to remove the gray table background
-                    .scrollContentBackground(.hidden)
-                    // 3. Set your custom background for the whole view
-                    .background(
-                        LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)],
-                                       startPoint: .topLeading,
-                                       endPoint: .bottomTrailing)
-                    )
                 }
             }
             .navigationTitle("The Vault")
-            .padding()
+            // Searchable needs to stay on the outer container
+            .searchable(text: $searchText, prompt: "Search notes")
             .toolbar {
-                // Add EditButton to enable delete controls
-                ToolbarItem(placement: .topBarLeading) {
-                    if !viewModel.isLocked {
+                if !viewModel.isLocked {
+                    ToolbarItemGroup(placement: .topBarLeading) {
+                        Button("Lock") {
+                            withAnimation { viewModel.toggleLock() }
+                        }
                         EditButton()
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !viewModel.isLocked {
+                    
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(action: { isShowingAddNote = true }) {
                             Image(systemName: "plus.circle.fill")
-                        }
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Lock"){
-                        withAnimation{
-                            viewModel.toggleLock()
+                                .font(.title3)
                         }
                     }
                 }
             }
-        }
-        .sheet(isPresented: $isShowingAddNote){
-            AddNoteView(viewModel: viewModel)
+            .sheet(isPresented: $isShowingAddNote) {
+                AddNoteView(viewModel: viewModel)
+            }
         }
     }
-}
-
-#Preview {
-    ContentView()
 }
